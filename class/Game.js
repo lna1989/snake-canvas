@@ -10,11 +10,14 @@ export default class Game {
     _lastTime = null
     _gameTime = 0
     _lastGameTime = 0
+    _initialSpeed = 1
     _speed = 1
     _gameIsOver = false
     _snake = null
     _food = null
     _blockSize = 20
+    _teleport = false
+    _dynamicSpeed = false
 
     _matrix = []
 
@@ -46,6 +49,10 @@ export default class Game {
         return this._lastGameTime
     }
 
+    get initialSpeed() {
+        return this._initialSpeed
+    }
+
     get speed() {
         return this._speed
     }
@@ -68,6 +75,14 @@ export default class Game {
 
     get matrix() {
         return this._matrix
+    }
+
+    get teleport() {
+        return this._teleport
+    }
+
+    get dynamicSpeed() {
+        return this._dynamicSpeed
     }
 
     set size(payload) {
@@ -94,6 +109,10 @@ export default class Game {
         this._lastGameTime = payload
     }
 
+    set initialSpeed(payload) {
+        this._initialSpeed = payload
+    }
+
     set speed(payload) {
         this._speed = payload
     }
@@ -118,13 +137,24 @@ export default class Game {
         this._matrix = payload
     }
 
-    constructor({size = 500, blockSize = 20, speed = 1000}) {
+    set teleport(payload) {
+        this._teleport = payload
+    }
+
+    set dynamicSpeed(payload) {
+        this._dynamicSpeed = payload
+    }
+
+    constructor({size = 500, blockSize = 20, speed = 1000, teleport = false, dynamicSpeed = false}) {
         this.size = size
         this.$canvas = document.createElement('canvas')
         this.$canvas.width = size
         this.$canvas.height = size
+        this.initialSpeed = speed
         this.speed = speed
         this.blockSize = blockSize
+        this.teleport = teleport
+        this.dynamicSpeed = dynamicSpeed
 
         this.setCanvasToDocument()
             .setButtonsToDocument()
@@ -202,6 +232,7 @@ export default class Game {
         if (snakePosition.x === this.food.position.x && snakePosition.y === this.food.position.y) {
             this.snake.positions.push(snakePosition)
             this.createFood()
+            this.increaseSpeed()
         }
 
         this.lastTime = now
@@ -301,23 +332,36 @@ export default class Game {
         return this
     }
 
+    increaseSpeed() {
+        if (!this.dynamicSpeed) {
+            return
+        }
+
+        if (!(this.snake.blockCount % this.dynamicSpeed.step)) {
+            this.speed = this.speed / 100 * (100 - this.dynamicSpeed.percent)
+        }
+
+        console.log(this.speed)
+    }
+
 
     reset() {
         this.gameIsOver = false
         this.gameTime = 0
         this.lastTime = 0
         this.lastGameTime = 0
+        this.speed = this.initialSpeed
         this.createSnake()
             .createFood()
     }
 
     gameOver() {
         this.gameIsOver = true
-        this.$text.innerText = `Game is over! Score:${this.snake.snakeLength}`
+        this.$text.innerText = `Game is over! Score:${this.snake.blockCount}`
     }
 
     gameFinish() {
         this.gameIsOver = true
-        this.$text.innerText = `You win! Score: ${this.snake.snakeLength}`
+        this.$text.innerText = `You win! Score: ${this.snake.blockCount}`
     }
 }

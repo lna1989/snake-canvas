@@ -26,7 +26,7 @@ export default class Snake {
     }
 
 
-    get snakeLength() {
+    get blockCount() {
         return this._positions.length
     }
 
@@ -72,14 +72,14 @@ export default class Snake {
         this.lastPosition = this.positions.shift()
         this.lastDirection = DIRECTION_UP
 
-        if (this.snakeLength) {
-            this.positions.push({
-                x: this.positions[this.snakeLength - 1]?.x,
-                y: this.positions[this.snakeLength - 1]?.y - this.size
-            })
-        } else {
-            this.positions = [{x: this.lastPosition.x, y: this.lastPosition.y - this.size}]
+        let x = (this.blockCount ? this.positions[this.blockCount - 1]?.x : this.lastPosition.x)
+        let y =(this.blockCount ? this.positions[this.blockCount - 1]?.y : this.lastPosition.y) - this.size
+
+        if (y < 0 && this.ctx.teleport) {
+            y = this.ctx.size - this.size
         }
+
+        this.changePosition({x, y})
 
         this.checkSnakePosition()
     }
@@ -91,14 +91,14 @@ export default class Snake {
         this.lastPosition = this.positions.shift()
         this.lastDirection = DIRECTION_RIGHT
 
-        if (this.snakeLength) {
-            this.positions.push({
-                x: this.positions[this.snakeLength - 1]?.x + this.size,
-                y: this.positions[this.snakeLength - 1]?.y
-            })
-        } else {
-            this.positions = [{x: this.lastPosition.x + this.size, y: this.lastPosition.y}]
+        let x = (this.blockCount ? this.positions[this.blockCount - 1]?.x : this.lastPosition.x) + this.size
+        let y = (this.blockCount ? this.positions[this.blockCount - 1]?.y : this.lastPosition.y)
+
+        if (x >= this.ctx.size && this.ctx.teleport) {
+            x = 0
         }
+
+        this.changePosition({x, y})
 
         this.checkSnakePosition()
     }
@@ -110,14 +110,14 @@ export default class Snake {
         this.lastPosition = this.positions.shift()
         this.lastDirection = DIRECTION_DOWN
 
-        if (this.snakeLength) {
-            this.positions.push({
-                x: this.positions[this.snakeLength - 1]?.x,
-                y: this.positions[this.snakeLength - 1]?.y + this.size
-            })
-        } else {
-            this.positions = [{x: this.lastPosition.x, y: this.lastPosition.y + this.size}]
+        let x = (this.blockCount ? this.positions[this.blockCount - 1]?.x : this.lastPosition.x)
+        let y = (this.blockCount ? this.positions[this.blockCount - 1]?.y : this.lastPosition.y) + this.size
+
+        if (y > this.ctx.size && this.ctx.teleport) {
+            y = 0
         }
+
+        this.changePosition({x, y})
 
         this.checkSnakePosition()
     }
@@ -129,14 +129,14 @@ export default class Snake {
         this.lastPosition = this.positions.shift()
         this.lastDirection = DIRECTION_LEFT
 
-        if (this.snakeLength) {
-            this.positions.push({
-                x: this.positions[this.snakeLength - 1]?.x - this.size,
-                y: this.positions[this.snakeLength - 1]?.y
-            })
-        } else {
-            this.positions = [{x: this.lastPosition.x - this.size, y: this.lastPosition.y}]
+        let x = (this.blockCount ? this.positions[this.blockCount - 1]?.x : this.lastPosition.x) - this.size
+        let y = (this.blockCount ? this.positions[this.blockCount - 1]?.y : this.lastPosition.y)
+
+        if (x < 0 && this.ctx.teleport) {
+            x = this.ctx.size - this.size
         }
+
+        this.changePosition({x, y})
 
         this.checkSnakePosition()
     }
@@ -157,9 +157,20 @@ export default class Snake {
         }
     }
 
+    changePosition({x, y}) {
+        if (this.blockCount) {
+            this.positions.push({
+                x,
+                y
+            })
+        } else {
+            this.positions = [{x, y}]
+        }
+    }
+
     checkSnakePosition() {
-        let x = this.positions[this.snakeLength - 1].x
-        let y = this.positions[this.snakeLength - 1].y
+        let x = this.positions[this.blockCount - 1].x
+        let y = this.positions[this.blockCount - 1].y
 
         // Если вышли за рамки игровой области
         if (x < 0 || x > this.ctx.size || y < 0 || y > this.ctx.size) {
@@ -167,7 +178,7 @@ export default class Snake {
         }
 
         // Если голова воткнулась в туловище
-        if (this.positions.findIndex((item) => item.x === x && item.y === y) !== this.snakeLength -1) {
+        if (this.positions.findIndex((item) => item.x === x && item.y === y) !== this.blockCount - 1) {
             return this.gameOver()
         }
     }
